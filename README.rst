@@ -20,15 +20,16 @@ The package can be installed through PYPI with
 Documentation
 =============
 
-Check the PyAFBF documentation for includes a `presentation <https://fjprichard.github.io/PyAFBF/database.html>`_ of the package.
+Check the PyAFBF documentation which includes a `presentation <https://fjprichard.github.io/PyAFBF/database.html>`_ of the package.
 
 Communication to the author
 ===========================
 
-PyAFBF_database is developed and maintained by Frédéric Richard. For feed-back, contributions, bug reports, contact directly the `author <https://github.com/fjprichard>`_, or use the `discussion <https://github.com/fjprichard/PyAFBFdb/discussions>`_ facility.
+PyAFBFdb is developed and maintained by Frédéric Richard. For feed-back, contributions, bug reports, contact directly the `author <https://github.com/fjprichard>`_, or use the `discussion <https://github.com/fjprichard/PyAFBFdb/discussions>`_ facility.
 
 
 Licence
 =======
 
 PyAFBFdb is under licence GNU GPL, version 3.
+
