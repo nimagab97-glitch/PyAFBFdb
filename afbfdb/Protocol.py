@@ -10,7 +10,7 @@ import time
 import yaml
 import pickle
 from afbf.utilities import seed, set_state, get_state
-from afbf.utilities import zeros, array, append, arange, nonzero, sort
+from afbf.utilities import zeros
 from afbf import tbfield, perfunction, sdata, coordinates
 from afbf.Classes.SpatialData import LoadSdata
 from afbf.Simulation.TurningBands import LoadTBField
@@ -45,7 +45,7 @@ class protocol:
         if os.path.isfile(self.rep + "/setting.yaml"):
             self.LoadSetting()
         else:
-            raise Exception("Provide setting.yaml to set the protocol.")
+            raise Exception("Configuration file is missing.")
 
         if "step" not in self.params_model['ftype']:
             raise Exception("Only step functions are supported.")
@@ -74,7 +74,7 @@ class protocol:
 
         # Set Random state
         self.SetRandomState()
-        # Check the database consistency.
+        # Check the database consistency and repair.
         self.CheckConsistency()
         # Display the setting.
         self.DisplaySetting()
@@ -112,70 +112,38 @@ class protocol:
         self.params_model = config['model']
         self.params_images = config['images']
 
+    def MissingData(self, n):
+        """Check if data is missing for an example.
+
+        :param int n:
+            Number of the example.
+        """
+        filename = self.SetFileName(n)
+        if os.path.isfile(filename + "-hurst.pickle") and\
+            os.path.isfile(filename + "-topo.pickle") and\
+                os.path.isfile(filename + "-features.pickle"):
+            return False
+        else:
+            return True
+
     def CheckConsistency(self):
         """Check the consistency of the database.
         """
-        self.DataConsistency = True
-        setting = False
-        randomstate = False
-        image = array([])
-        hurst = array([])
-        topo = array([])
-        feat = array([])
+        examples = []
         files = os.listdir(self.rep)
+        # List of examples.
         for j in range(len(files)):
             file = files[j]
             if file.find("example") >= 0:
                 n = int(file[8:14])
-                if file.find("-image", 0) >= 0:
-                    image = append(image, n)
-                elif file.find("-hurst", 0) >= 0:
-                    hurst = append(hurst, n)
-                elif file.find("-topo", 0) >= 0:
-                    topo = append(topo, n)
-                elif file.find("-features", 0) >= 0:
-                    feat = append(feat, n)
-            elif file == "setting.yaml":
-                setting = True
-            elif file == "randomstate.pickle":
-                randomstate = True
+                examples.append(n)
 
-        n = min(array([image.size, hurst.size, topo.size, feat.size]))
-        exam = arange(0, n)
-        image = sort(image)
-        topo = sort(topo)
-        hurst = sort(hurst)
-        feat = sort(feat)
-        ind = nonzero(exam - image[0:n] != 0)
-        if ind[0].size != 0:
-            raise Exception("Missing images:", ind[0])
-        ind = nonzero(exam - topo[0:n] != 0)
-        if ind[0].size != 0:
-            raise Exception("Missing topothesy:", ind[0])
-        ind = nonzero(exam - hurst[0:n] != 0)
-        if ind[0].size != 0:
-            raise Exception("Missing Hurst:", ind[0])
-        ind = nonzero(exam - feat[0:n] != 0)
-        if ind[0].size != 0:
-            raise Exception("Missing features:", ind[0])
-
-        if image.size > n or topo.size > n or hurst.size > n or feat.size > n:
-            raise Exception("Unequal number of example data.")
-            raise Exception("Data limited to " + str(n - 1))
-
-        # Number of samples.
-        self.nbexpe = n
-
-        if setting is False:
-            raise Exception("Setting file: missing.")
-            self.DataConsistency = False
-
-        if randomstate is False:
-            raise Exception("Random state: missing.")
-            self.DataConsistency = False
-
-        if self.DataConsistency is False:
-            raise BaseException("Setting failed due to inconsistent data.")
+        self.nbexpe = max(examples)
+        # Check if data is missing and, if so, complete the database.
+        for ex in range(self.nbexpe):
+            if self.MissingData(ex):
+                print('Warning: missing example ', n)
+                self.CreateFields(expe_start=ex, expe_end=ex+1)
 
     def SetExampleNumberStr(self, n):
         """Set the number of the example in an str format.
@@ -195,9 +163,6 @@ class protocol:
 
         :param int n: The index of the example.
         """
-        if self.DataConsistency is not True:
-            raise Exception("LoadExample: set the database.")
-
         if n >= self.nbexpe:
             raise Exception(f"LoadExample: index {n} out of bounds.")
 
@@ -262,7 +227,6 @@ class protocol:
         if _create:
             # Create new examples.
             print('Field creation.')
-            expe_start = self.nbexpe
             # Set the mode of simulation.
             self.field.hurst.SetStepSampleMode(self.params_model['smode_cst'],
                                                self.params_model['Hmin'],
@@ -278,7 +242,7 @@ class protocol:
         for n in range(expe_start, expe_end):
             filename = self.SetFileName(n)
             radname = filename[-6:]
-            if os.path.isfile(filename + "-hurst.pickle") is False:
+            if self.MissingData(n):
                 # Creating a new sample.
                 seed(n)
                 # Name of the field.
