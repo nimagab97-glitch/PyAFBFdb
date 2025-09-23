@@ -219,9 +219,11 @@ class protocol:
                 pickle.dump([rs], f)
             set_state(rs)
 
-    def IterateFields(self, expe_start=0, expe_end=None, _create=True):
+    def IterateFields(self, expe_start=None, expe_end=None, _create=True):
         """Iterate to create new examples or visualize existing ones.
         """
+        if expe_start is None:
+            expe_start = 0
         if expe_end is None:
             expe_end = self.nbexpe
         if _create:
@@ -236,6 +238,7 @@ class protocol:
         else:
             # Visualize existing examples.
             print('Field visualization.')
+            expe_end = min(expe_end, self.nbexpe)
             expe_end = min(expe_end, self.nbexpe)
 
         start = time.time()
@@ -264,7 +267,7 @@ class protocol:
                 print("Example %d: %4.3f sec." % (n, time.time() - start))
                 self.SaveExample(n)
                 self.nbexpe += 1
-            else:
+            elif not _create:
                 self.ShowExample(n)
 
     def DisplayFields(self, expe_start=0, expe_end=None):
