@@ -138,7 +138,10 @@ class protocol:
                 n = int(file[8:14])
                 examples.append(n)
 
-        self.nbexpe = max(examples)
+        if len(examples) == 0:
+            self.nbexpe = 0
+        else:
+            self.nbexpe = max(examples) + 1
         # Check if data is missing and, if so, complete the database.
         for ex in range(self.nbexpe):
             if self.MissingData(ex):
