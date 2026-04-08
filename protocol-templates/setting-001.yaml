@@ -11,5 +11,5 @@ model: # Modeling of the hurst and topothesy functions.
 
 images: # Setting for image generation.
   K: 500  # Number of bands.
-  N: 128  # image size
+  N: 64  # image size
 ...
